@@ -1,0 +1,6 @@
+NUMBER: 7
+BOARD: board.txt
+TILES: bag.txt
+DICTIONARY: dictionary.txt
+INIT: initfile.txt
+ 
