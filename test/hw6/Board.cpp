@@ -44,11 +44,11 @@ void Board::addInfo (string board_file_name, int k)
 	_startx --; _starty --;  // coordinates from 0 in array
 
 	// Anything else you need to initialize?
-	board = new char*[_x];																		
+	board = new char*[_x];
 	for(int i = 0; i < _x; ++i)
     board[i] = new char[_y];
 
-  activeTiles = new Tile**[_x];															
+  activeTiles = new Tile**[_x];
 	for(int i = 0; i < _x; ++i){
 		activeTiles[i] = new Tile*[_y];
 		for(int j = 0; j < _y; ++j)
@@ -99,6 +99,9 @@ void Board::config(string initFileName){  //CHANGED
 	string line;
 	ifstream configFile (initFileName.c_str());
 	int row = 0;
+	firstWord = false;
+
+//	cout << "in config" << endl;
 
 	while(getline(configFile, line)){
 		if(line.size()/3 != _y){
@@ -136,9 +139,9 @@ std::string Board::returnString(int x, int y){
 	std::string let;
 	if(activeTiles[x][y]->getLetter() != '@'){
 		let += activeTiles[x][y]->getUse();
-		// if (activeTiles[x][y]->getUse() != activeTiles[x][y]->getLetter()) 
+		// if (activeTiles[x][y]->getUse() != activeTiles[x][y]->getLetter())
 		// 	let += toupper(let[0]);
-		return let;	
+		return let;
 	}
 	else{
 		let += board[x][y];
@@ -154,15 +157,15 @@ void Board::printBoard(){
 			{
 			if(activeTiles[i][j]->getLetter() != '@'){
 				char let = activeTiles[i][j]->getUse();
-				if (activeTiles[i][j]->getUse() != activeTiles[i][j]->getLetter()) 
+				if (activeTiles[i][j]->getUse() != activeTiles[i][j]->getLetter())
 					let = tolower(let);
 				cout << let << " ";
 				}
-			else 
+			else
 				cout << board[i][j] << " ";
 		}
 	}
-	cout << endl;																
+	cout << endl;
 }
 
 int Board::addCheck(char direction, int row,
@@ -170,25 +173,25 @@ int Board::addCheck(char direction, int row,
 
 	bool bingo = false;
 	if(tiles.size() == handSize)
-		bingo = true;	
-
+		bingo = true;
+	int score = 0;
 	int points = 0;
 	std::string spellCheck;
 	int sc = 0;
-	int t = 0;	
+	int t = 0;
 	int ret = -1;
 	std::vector<std::string> words;
 
 	if (tiles.size() == 0) return -1;
 
 	if(direction == '-'){ //check in bounds
-		if(row + tiles.size() > _x){
+		if(col + tiles.size() > _x){
 			return -1;
 		}
 	}
 	if(direction == '|'){
-		if(col + tiles.size() > _y){
-			return -1; 
+		if(row + tiles.size() > _y){
+			return -1;
 		}
 	}
 
@@ -218,8 +221,9 @@ int Board::addCheck(char direction, int row,
 
 	if(firstWord){ //check start tile
 		if(direction == '-'){
-			if(row != _starty){	
-				cout << row << ", " << _starty << endl;return -1;}
+			if(row != _starty){
+				return -1;
+			}
 			if(col > _startx){
 				return -1;
 			}
@@ -235,7 +239,6 @@ int Board::addCheck(char direction, int row,
 			if(row + tiles.size() < _starty)
 				return -1;
 		}
-		firstWord = false;
 	}
 
 	bool** newTiles = new bool*[_x]; //new board to know what tiles were placed for scoring routine
@@ -243,13 +246,13 @@ int Board::addCheck(char direction, int row,
     newTiles[i] = new bool[_y];
   for (int i = 0; i < _x; ++i)
   	for (int j = 0; j < _y; ++j)
-  		newTiles[i][j] = false;			
-	
-// Flag letters that are new		
+  		newTiles[i][j] = false;
+
+// Flag letters that are new
 	if(direction == '-'){
 		int to = tiles.size()+col;
-		if (to >= _x) to = _x;
 		for (int i = col; i < to; ++i){
+			if (i >= _x) goto xit;
 			if(activeTiles[row][i]->getUse() == '@'){
 				activeTiles[row][i] = tiles[t];
 				t++;
@@ -261,8 +264,9 @@ int Board::addCheck(char direction, int row,
 	}
 	if(direction == '|'){
 		int to = tiles.size()+row;
-		if (to >= _y) to = _y;
+		if (to > _y) to = _y;
 		for (int i = row; i < to; ++i){
+			if (i >= _y) goto xit;
 			if(activeTiles[i][col]->getLetter() == '@'){
 				activeTiles[i][col] = tiles[t];
 				t++;
@@ -276,7 +280,6 @@ int Board::addCheck(char direction, int row,
 
 // Scan whole board for all words
 
-		int score = 0;
 		for (int j = 0; j < _x; ++j)			// For each column ...
   		for (int i = 0; i < _y; ++i){
   			bool foundWord = false;
@@ -326,13 +329,13 @@ int Board::addCheck(char direction, int row,
 									activeTiles[i][j] = new Tile('@',0);
 							}
 						goto xit;
-					} 
+					}
    			}
 			}
 
 	 	for (int i = 0; i < _y; ++i)  // For each row ...
-			for (int j = 0; j < _x; ++j){ 
- 
+			for (int j = 0; j < _x; ++j){
+
   		bool foundWord = false;
 			int multiplier = 1;
 			int wordPoints = 0;
@@ -375,24 +378,24 @@ int Board::addCheck(char direction, int row,
 									activeTiles[i][j] = new Tile('@', 0);
 							}
 						goto xit;
-					} 
+					}
   		}
   	}
 		ret = score;
 
 xit:
-	
+
 	if (!add)
 		for (int i = 0; i < _x; i++)
 			for (int j = 0; j < _y; j++)
 				if(newTiles[i][j])
 					activeTiles[i][j] = new Tile('@', 0);
-			
+
   for (int i = 0; i < _x; ++i)
 		delete [] newTiles[i];
-	delete [] newTiles;			
+	delete [] newTiles;
 
-	return ret;					
+	return ret;
 	}
 
 
@@ -429,6 +432,7 @@ bool Board::eval(char letter, int row, int col, bool vertical,Dictionary &dict){
 //		return false;
 //	}
 
+	if (row >= _y || col >= _x) return false;
 	if (vertical){ //checking col - i.e. col is fixed
 		int j = col;
 		for (int i = 0; i < _y; ++i){
@@ -442,7 +446,8 @@ bool Board::eval(char letter, int row, int col, bool vertical,Dictionary &dict){
 				temp += tolower(let);						// Build word
 				i++;
 			}
-			if(dict.checkWord(temp) < 2)																// CHANGED
+
+			if(temp.size() > 1 && dict.checkWord(temp) < 2)																// CHANGED
 				return false;
 		}
 	}
@@ -460,7 +465,7 @@ bool Board::eval(char letter, int row, int col, bool vertical,Dictionary &dict){
 				temp += tolower(let);						// Build word
 				j++;
 			}
-			if(dict.checkWord(temp) < 2)
+			if(temp.size() > 1 && dict.checkWord(temp) < 2)
 				return false;
 		}
 	}
@@ -474,6 +479,7 @@ int Board::checkRow(int row, int col, int len){ //returns 1 if word touches tile
 
 	for (int i = 0;i < len; i++){		//
 		if (c == _x) return 0;
+		if (c == _startx && row == _starty) return 4;
 		if (activeTiles[row][c]->getUse() != '@'){									// this row
 			line = 1;
 			i--;						// since this is a board letter, don't place combo letter
@@ -492,11 +498,30 @@ int Board::checkRow(int row, int col, int len){ //returns 1 if word touches tile
 	return line + adj;
 }
 
-bool Board::checkCol(int row, int col, int len){
-	for (int i = row; i < len; i++)
-		if (activeTiles[i+1][col]->getUse() != '@' && activeTiles[i-1][col]->getUse() != '@')
-			return false;
-	return true;
+int Board::checkCol(int row, int col, int len){
+	int line = 0;
+	int adj = 0;
+	int r = row;
+
+	for (int i = 0;i < len; i++){		//
+		if (r == _y) return 0;
+		if (r == _starty && col == _startx) return 4;
+		if (activeTiles[r][col]->getUse() != '@'){									// this col
+			line = 1;
+			i--;						// since this is a board letter, don't place combo letter
+			r++;
+			continue;
+		}
+		if (col				 && activeTiles[r][col-1]->getUse() != '@') adj = 2;	// col above
+		if (col < _x-1 && activeTiles[r][col+1]->getUse() != '@') adj = 2;	// col below
+		r++;
+	}
+
+	if (line == 0){
+		if (row > 0 && activeTiles[row-1][col]->getUse() != '@') line = 1;			// row before
+		if (row < _y-1 && activeTiles[row+1][col]->getUse() != '@') line = 1;		// row after
+	}
+	return line + adj;
 }
 
 string Board::getWord(char direction, int row, int col, string hand){
@@ -507,14 +532,15 @@ string Board::getWord(char direction, int row, int col, string hand){
 	if (direction == '-'){
 		int boardPos = col;
 		int atPos = col;
-		for (int i = col; i < col+hand.size()+1 && atPos < _x; i++){
+		for (int i = col-1; i >= 0; i--) if (activeTiles[row][i]->getLetter() != '@') atPos--;else break;
+		for (int i = atPos; i < col+hand.size()+1 && atPos < _x; i++){
 			if (activeTiles[row][atPos]->getLetter() == '@'){
 				if (hPos >= hand.size()) break;
 				word += hand[hPos];
 				hPos++;
 				atPos++;
 			}
-			else{ 
+			else{
 				word += activeTiles[row][atPos]->getUse();
 				atPos++;
 				i--;
@@ -524,7 +550,8 @@ string Board::getWord(char direction, int row, int col, string hand){
 	else{
 		int boardPos = row;
 		int atPos = row;
-		for (int i = row; i < row+hand.size()+1 && atPos < _y; i++){
+		for (int i = row-1; i >= 0; i--) if (activeTiles[i][col]->getLetter() != '@') atPos--;else break;
+		for (int i = atPos; i < row+hand.size()+1 && atPos < _y; i++){
 			if (activeTiles[atPos][col]->getUse() == '@'){
 				if (hPos >= hand.size()) break;
 				word += hand[hPos];

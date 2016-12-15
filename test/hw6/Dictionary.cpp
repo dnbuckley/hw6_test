@@ -46,8 +46,7 @@ void Dictionary::addInfo (string dictionary_file_name)
 int Dictionary::checkWord(std::string word){
 
 	//string mid = dictionary[mid];
-	for (int i = 0;i < word.size(); ++i) word[i] = tolower(word[i]);					// JDB
-
+	for (int i = 0;i < word.size(); ++i) word[i] = tolower(word[i]);	
 	int lo = 0;
 	int hi = dictionary.size()-1;
 	int mid;int res = 0;
@@ -55,10 +54,7 @@ int Dictionary::checkWord(std::string word){
 	while(lo <= hi){
 		mid = (lo+hi)/2;
 		if(word == dictionary[mid])
-			{	
-			res = 2;
-			break;
-			}	
+			return 2;
 		if(word < dictionary[mid])
 			hi = mid-1;
 		else
@@ -67,8 +63,12 @@ int Dictionary::checkWord(std::string word){
 
 // If word legit as a prefix?
 
-	if (lo < 0 || hi < 0) return res;
 	int nc = word.size();
-	if (word == dictionary[lo].substr(0,nc) || word == dictionary[hi].substr(0,nc)) res += 1;
-	return res;
+	if (lo >= 0 && lo < dictionary.size()){		
+		if (word == dictionary[lo].substr(0,nc)) return 1;
+		}
+	if (hi >= 0 && hi < dictionary.size()){		
+		if (word == dictionary[hi].substr(0,nc)) return 1;
+		}
+	return 0;
 }

@@ -17,8 +17,8 @@
 class Bag {
 
 public:
-	Bag();
-	void addInfo (const std::string bag_file_name, int random_seed);
+	
+	Bag (const std::string bag_file_name, int random_seed);
 	~Bag ();
 
 	void addTile (Tile *tile);

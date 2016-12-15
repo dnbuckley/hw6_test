@@ -27,7 +27,7 @@ public:
 	string returnString(int x, int y);
 	bool checkConnect(int len, int x, int y, char direction);
 	int checkRow(int row, int col, int len); //return true if word does not touch other word
-	bool checkCol(int row, int col, int len);
+	int checkCol(int row, int col, int len);
 	string getWord(char direction, int row, int col, string hand);
 	bool eval(char letter, int x, int y, bool vertical,Dictionary &dict);
 	void config(string initFileName);

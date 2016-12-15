@@ -44,7 +44,6 @@ std::string Player::getMove(){
 	cout << "Current player = " << name << "    Current hand = " << currentHand	
 	<< "  Your score = " << score << endl << "What's your move?" << endl;
 
-//	cin >> input;																																// JDB
 	getline(cin,input);	
 	if (input == "") getline(cin,input);
 

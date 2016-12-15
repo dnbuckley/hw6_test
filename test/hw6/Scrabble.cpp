@@ -25,11 +25,12 @@
 using namespace std;
 extern bool firstWord;
 
-/*todo check logic of maxlenpos++, 
+/*todo check logic of maxlenpos++,
 fix "would you like this ai player"
 seg fault*/
 
-bool init = true;
+bool init = false;
+int k;
 void get_available(int k,std::vector<std::vector<int> >& perms,std::vector<int> hand,std::vector<int> perm);
 void getperm(std::vector<std::vector<int> >& perms,int n);
 
@@ -52,7 +53,7 @@ void readConfigFile (string config_file_name,
 		string parameter;
 		ss >> parameter;
 		if (parameter == "NUMBER:")
-			{ ss >> hand_size; number = true; }
+			{ ss >> k; number = true; }
 		else if (parameter == "BOARD:")
 		  { ss >> board_file_name; board = true; }
 		else if (parameter == "TILES:")
@@ -78,8 +79,7 @@ int main (int nargs, char **args)
 		cout << "Usage: Scrabble <config-filename>\n";
 	try {
 
-//		string file = "config.txt";				
-			string file = args[1];					
+			string file = args[1];
 
 		string dictionaryFileName, boardFileName, bagFileName, initFileName;
 		unsigned int numTiles;
@@ -92,22 +92,21 @@ int main (int nargs, char **args)
 
 	Dictionary dict;
 	Board board;
-	Bag bag;
+	Bag bag(bagFileName, 10);
 	aI AI;
 
 	dict.addInfo(dictionaryFileName);
-	bag.addInfo(bagFileName, 10);
-	
+	//bag.addInfo(bagFileName, 10);
+
 
 // 		Good luck!
-		
+
 		// int numHuman;
 		int num;
-		int k;
 		cout << "Number of players?" << endl;
 		cin >> num;
-		cout << "Number of tiles per player? (k)" << endl;
-		cin >> k;
+		// cout << "Number of tiles per player? (k)" << endl;
+		// cin >> k;
 
 		board.addInfo(boardFileName, k);
 		if (init)
@@ -119,13 +118,13 @@ int main (int nargs, char **args)
 
 		std::vector<std::vector<int> > perms;
 		getperm(perms,k);
-		
+
 		Player* players = new Player[num];
 		std::string name;
 		int type;
 
 		// for (int i = 0; i < numHuman; ++i){ //adding all the players and giving them their tiles
-		// 	cout << "Name of player " << i+1 << "?" << endl;															// 
+		// 	cout << "Name of player " << i+1 << "?" << endl;															//
 		// 	cin >> name;
 		// 	players[i].addInfo(name, i+1,0);
 		// 	players[i].addTiles(bag.drawTiles(k));
@@ -134,7 +133,7 @@ int main (int nargs, char **args)
 
 
 		for (int i = 0; i < num; ++i){ //adding all the players and giving them their tiles
-			cout << "Name of player " << i+1 << "?" << endl;															// 
+			cout << "Name of player " << i+1 << "?" << endl;															//
 			cin >> name;
 			string pre;
 			type = 0;
@@ -152,7 +151,7 @@ int main (int nargs, char **args)
 
 		int numPasses = 0;
 		int turn = -1;
-
+		board.printBoard();
 
 		while(true){
 			for (int i = 0; i < num; i++){
@@ -162,21 +161,14 @@ int main (int nargs, char **args)
 
 			turn++;
 			turn = turn%num;
-			board.printBoard();
 			if(numPasses == num)
 				break;
 			else{
-
-				cout << endl << "Scoreboard:" << endl;
-				for (int i = 0; i < num; i++){
-					cout << "Player: " << players[i].name;
-					cout << "  Score = " << players[i].score << endl;
-				}
-				cout << endl;
-
 				string current;
-				if(players[turn].type != 0)
+				if(players[turn].type != 0) {
 					current = AI.doMove(players[turn], board, dict, perms);
+					cout << current << endl;
+				}
 				else current = players[turn].getMove();
 
 				if(current[1] == 'A'){		// pAss
@@ -251,9 +243,10 @@ int main (int nargs, char **args)
 				ss >> temp;
 				row--;
 				col--;
+				int usetiles = 0;
 
 				for (int i = 0; i < temp.size(); ++i){									// For each letter placed ...
-					int jFound = -1;																			// 
+					int jFound = -1;																			//
 					for (int j = 0; j < players[turn].hand.size(); ++j){  // check for matching tile
 						if(players[turn].hand[j]->getLetter() == temp[i]){			// tile matches
 							jFound = j;
@@ -265,13 +258,14 @@ int main (int nargs, char **args)
 							i++;																							// move to next char - the blank letter
 							players[turn].hand[jFound]->useAs(temp[i]);
 							}
+						usetiles++;
 						wordTiles.push_back(players[turn].hand[jFound]);						// Add to vector of tiles for this word
 						for(int n = jFound; n < players[turn].hand.size()-1; n++)			// Remove placed tile from hand
 							players[turn].hand[n] = players[turn].hand[n+1];
 						players[turn].hand.pop_back();
 						//bingo++;																									// Count letters used
 					}
-					else{ 
+					else{
 						players[turn].addTiles(wordTiles);
 						wordTiles.clear();
 						cout << "Can not use a tile you don't have: " << temp[i] << endl;
@@ -288,13 +282,22 @@ int main (int nargs, char **args)
 					turn--;
 					}
 				else{
-					int tiles = temp.size();
-					if(bag.tilesRemaining() < temp.size())
-						tiles = bag.tilesRemaining();
-					players[turn].addTiles(bag.drawTiles(tiles));
+					if(bag.tilesRemaining() < usetiles)
+						usetiles = bag.tilesRemaining();
+					players[turn].addTiles(bag.drawTiles(usetiles));
 					players[turn].score += points;
+					firstWord = false;
 				}
-			} 
+
+			board.printBoard();
+
+			cout << endl << "Scoreboard:" << endl;
+			for (int i = 0; i < num; i++){
+				cout << "Player: " << players[i].name;
+				cout << "  Score = " << players[i].score << endl;
+			}
+			cout << endl;
+			}
 		}
  	}
  	endGame:

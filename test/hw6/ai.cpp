@@ -19,10 +19,14 @@ aI::~aI(){}
 
 string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<std::vector<int> >& perms){
 
+
 	int n = aIPlayer.hand.size();
 	string hand;
-	for (int c=0;c < n;c++)
+	for (int c=0;c < n;c++){
 		hand += aIPlayer.hand[c]->getLetter();
+		cout << aIPlayer.hand[c]->getLetter();
+	}
+	cout << endl;
 
 //		Use this player's hand, and the perms list to generate wordlist
 
@@ -40,17 +44,16 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 				goto xit;
 			char ch = hand[get];								//  temp ....blanks.push_back(c);
 			wd += ch;
+			if (ch == '?') blanks.push_back(c);
 			}
 		if (blanks.size() == 0)						// If no blanks, determine legality
 			{
 			int check = dict.checkWord(wd);		// Returns 0:rubbish     1: legal prefix   2: legal word    3: legal word & prefix
 			fullList.push_back(wd);
 			checkList.push_back(check);
-			if (check >= 2)
-				masterList.push_back(wd);
 			if (check%2 == 0)				// Not a prefix no point check longer strings
 				{
-				for (;p < perms.size()-1;p++) 
+				for (;p < perms.size()-1;p++)
 					if (perms[p].size() <= len) break;
 				}
 			}
@@ -59,11 +62,10 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 			for (char b1='A'; b1 <= 'Z';b1++)
 				{
 				wd[blanks[0]] = b1;
-				int check = dict.checkWord(wd);	
+				int check = dict.checkWord(wd);
 				fullList.push_back(wd);
 				checkList.push_back(check);
-				if (check == 2)
-					masterList.push_back(wd);
+
 				}
 			}
 		else if (blanks.size() == 2)		// Two blanks
@@ -73,7 +75,7 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 					{
 					wd[blanks[0]] = b1;
 					wd[blanks[1]] = b2;
-					int check = dict.checkWord(wd);	
+					int check = dict.checkWord(wd);
 					fullList.push_back(wd);
 					checkList.push_back(check);
 					if (check == 2)	masterList.push_back(wd);
@@ -84,13 +86,7 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 
 // Could sort and remove dups - for efficiency
 
-		int np = masterList.size();
-		ofstream of("c:\\temp\\wordlst.txt");
-		for (int p=0;p < masterList.size();p++)
-			{
-			of << masterList[p] << "\n";
-			}
-		of.close();
+
 
 	int k = n;
 	//int maxLen = 0;
@@ -104,7 +100,7 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 	int touches[101];
 
 	for(int i = 0; i < board._y; i++){      // checking horizontally, iterating through rows
-		for(int k = 0; k <= board._x; k++){		// for each position in the row	
+		for(int k = 0; k < board._x; k++){		// for each position in the row
 			// Get combo lengths which will touch existing letters
 
 			for (int len = 1;len < board._y;len++)
@@ -116,7 +112,7 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 				if (touch == 0) continue;
 				string current = fullList[j];
 
-				bool qfree = (touch == 2);			// Adj row only
+				bool qfree = (touch == 2 || touch == 4);			// Adj row only
 				bool qlegal;
 				if (qfree)
 					qlegal = (checkList[j] >= 2);
@@ -127,12 +123,12 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 
 				// Check overlapping columns
 
- 				if(qlegal){	
+ 				if(qlegal){
  					bool fail = false;
 					if (touch >= 2)
 						{
 						for(int p = 0; p < current.size(); p++){
-							if(!board.eval(current[p], i, k+p, true,dict)){		// returns true if this column is legit 
+							if(!board.eval(current[p], i, k+p, true,dict)){		// returns true if this column is legit
 								fail = true;
 								break;
 							}
@@ -147,27 +143,27 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 							maxLenPos[0] = i;
 							maxLenPos[1] = k;
 							maxLenDir = '-';
-						} 
+						}
 						if (score > maxScore){
 							maxScore = score;
 							maxScoreWord = fullList[j];
 							maxScorePos[0] = i;
 							maxScorePos[1] = k;
 							maxScoreDir = '-';
-							} 
+							}
 						}
 				}
 			}// end combo loop
 		}// end position loop
 	}// end row loop
 
-	for(int k = 0; k <= board._x; k++){		// for each position in the col
+	for(int k = 0; k < board._x; k++){		// for each position in the col
 			for(int i = 0; i < board._y; i++){      // checking vertically, iterating through col
-	
+
 			// Get combo lengths which will touch existing letters
 
 			for (int len = 1;len < board._x;len++)
-				touches[len] = board.checkRow(i, k, len); //returns 1 if word touches tile on row; 2 if touchs on adj row; 3 if both; 0 otherwise (or extends beyond R)
+				touches[len] = board.checkCol(i, k, len); //returns 1 if word touches tile on row; 2 if touchs on adj row; 3 if both; 0 otherwise (or extends beyond R)
 
 			for(int j = 0; j < fullList.size(); j++){			// for each letter combination from hand
 				int len = fullList[j].size();
@@ -175,7 +171,7 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 				if (touch == 0) continue;
 				string current = fullList[j];
 
-				bool qfree = (touch == 2);			// Adj row only
+				bool qfree = (touch == 2 || touch == 4);			// Adj row only
 				bool qlegal;
 				if (qfree)
 					qlegal = (checkList[j] >= 2);
@@ -186,12 +182,12 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 
 				// Check overlapping columns
 
- 				if(qlegal){	
+ 				if(qlegal){
  					bool fail = false;
-					if (touch >= 2)
+					if (touch == 2 || touch == 3)
 						{
 						for(int p = 0; p < current.size(); p++){
-							if(!board.eval(current[p], i, k+p, true,dict)){		// returns true if this column is legit 
+							if(!board.eval(current[p], i+p, k, false,dict)){		// returns true if this column is legit
 								fail = true;
 								break;
 							}
@@ -206,20 +202,22 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 							maxLenPos[0] = i;
 							maxLenPos[1] = k;
 							maxLenDir = '|';
-						} 
+						}
 						if (score > maxScore){
 							maxScore = score;
 							maxScoreWord = fullList[j];
 							maxScorePos[0] = i;
 							maxScorePos[1] = k;
 							maxScoreDir = '|';
-							} 
+							}
 						}
 				}
 			}// end combo loop
 		}// end position loop
 	}// end row loop
-	
+
+
+
 	string qm; //to simplify following code because string functions suck
 	qm += '?';
 
@@ -265,11 +263,11 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 			output.append(maxLenWord);
 			return output;
 		}
-			
+
 	}
 	if (aIPlayer.type == 2){
 		if (maxScoreWord == "")
-			return "pass";
+			return "PASS";
 		else{
 
 			string hand;
@@ -308,8 +306,8 @@ string aI::doMove(Player &aIPlayer, Board &board, Dictionary dict,std::vector<st
 			output.append(toString(++maxScorePos[1]));
 			output += ' ';
 			output.append(maxScoreWord);
-			return output;	
-		}	
+			return output;
+		}
 	}
 	return "";
 }
@@ -336,7 +334,7 @@ vector<Tile*> aI::toTile(Player &aIPlayer, string letters){
 		}
 	}
 	return hand;
-} 
+}
 
 string aI::toString(int location){
 	string Result;

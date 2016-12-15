@@ -21,9 +21,7 @@
 
 using namespace std;
 
-Bag::Bag(){}
-
-void Bag::addInfo (const string bag_file_name, int random_seed)
+Bag::Bag (const string bag_file_name, int random_seed)
 {
 	srand (random_seed);
 	ifstream bagFile (bag_file_name.c_str());
@@ -45,6 +43,7 @@ void Bag::addInfo (const string bag_file_name, int random_seed)
 			}
 		}
 		bagFile.close ();
+		cout << "number of tiles = " << _tiles.size() << endl;
 	}
 	else throw invalid_argument ("Cannot open file: " + bag_file_name);
 	return;
